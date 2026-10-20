@@ -1,5 +1,6 @@
 name: giam-sat-dong-bo
-# 10 phut / lan: so Firebase (tim + da quay) voi git, web dang chay, lan dung web gan nhat. LECH ⇒ workflow DO ⇒ GitHub gui email cho chu kho.
+# 10 phut / lan (lich GitHub thuc te 27-38 phut): so Firebase (tim + da quay) voi git, web dang chay, lan dung web gan nhat, va PHIEU QUAY tren so co dung luat Google Sheet khong.
+# LECH ⇒ workflow DO ⇒ GitHub gui email cho chu kho.
 on:
   schedule:
     - cron: '3,13,23,33,43,53 * * * *'
@@ -33,12 +34,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python tools/giam_sat.py
-      - name: phieu tren so dung luat Google Sheet? (R2 canh / R4 lap / R5 ghi chu dung)
+      - name: dong bo Firebase - git - web
+        run: python tools/giam_sat.py
+        env:
+          TIKTOK_LUAT: ${{ github.workspace }}/law
+          REPO: ${{ github.repository }}
+      - name: phieu tren so dung luat Google Sheet? (R2 canh, R4 lap, R5 ghi chu dung)
         run: python law/so-san-pham/kiem_phieu_theo_sheet.py
         env:
           TIKTOK_LUAT: ${{ github.workspace }}/law
           CODE_REPO: ${{ github.workspace }}/code
-        env:
-          TIKTOK_LUAT: ${{ github.workspace }}/law
-          REPO: ${{ github.repository }}
