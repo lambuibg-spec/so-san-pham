@@ -23,10 +23,22 @@ jobs:
           token: ${{ secrets.KHO_READ_TOKEN }}
           path: law
           fetch-depth: 0
+      - name: kho code (chi doc)
+        uses: actions/checkout@v4
+        with:
+          repository: lambuibg-spec/tiktok-tool-code
+          token: ${{ secrets.KHO_READ_TOKEN }}
+          path: code
+          fetch-depth: 1
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: python tools/giam_sat.py
+      - name: phieu tren so dung luat Google Sheet? (R2 canh / R4 lap / R5 ghi chu dung)
+        run: python law/so-san-pham/kiem_phieu_theo_sheet.py
+        env:
+          TIKTOK_LUAT: ${{ github.workspace }}/law
+          CODE_REPO: ${{ github.workspace }}/code
         env:
           TIKTOK_LUAT: ${{ github.workspace }}/law
           REPO: ${{ github.repository }}
