@@ -1,0 +1,32 @@
+name: giam-sat-dong-bo
+# 10 phut / lan: so Firebase (tim + da quay) voi git, web dang chay, lan dung web gan nhat. LECH ⇒ workflow DO ⇒ GitHub gui email cho chu kho.
+on:
+  schedule:
+    - cron: '3,13,23,33,43,53 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  kiem:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONIOENCODING: utf-8
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: kho luat (chi doc, day du lich su)
+        uses: actions/checkout@v4
+        with:
+          repository: lambuibg-spec/tiktok-tool-luat
+          token: ${{ secrets.KHO_READ_TOKEN }}
+          path: law
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python tools/giam_sat.py
+        env:
+          TIKTOK_LUAT: ${{ github.workspace }}/law
+          REPO: ${{ github.repository }}

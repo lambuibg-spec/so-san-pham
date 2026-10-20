@@ -1,0 +1,90 @@
+name: dung-web-tu-git
+# GitHub la NOI DUY NHAT dung va dang web so san pham (20/10/2026). May / phien Claude KHONG day trang len nua.
+# 10 phut / lan + khi sua tools / workflow + bam tay (Run workflow). Chi dang khi trang DOI (so dau 'build:' cuoi trang).
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      ep:
+        description: 'Ep dang ngay ca khi trang khong doi (1 = co)'
+        required: false
+        default: '0'
+  push:
+    branches: [main]
+    paths: ['tools/build_web.py', '.github/workflows/build.yml']
+concurrency:
+  group: dung-web
+  cancel-in-progress: false
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TZ: Asia/Ho_Chi_Minh
+      PYTHONIOENCODING: utf-8
+    outputs:
+      doi: ${{ steps.so.outputs.doi }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: kho luat (chi doc)
+        uses: actions/checkout@v4
+        with:
+          repository: lambuibg-spec/tiktok-tool-luat
+          token: ${{ secrets.KHO_READ_TOKEN }}
+          path: law
+          fetch-depth: 1
+      - name: kho code (chi doc)
+        uses: actions/checkout@v4
+        with:
+          repository: lambuibg-spec/tiktok-tool-code
+          token: ${{ secrets.KHO_READ_TOKEN }}
+          path: code
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow requests
+      - name: dung trang tu git
+        env:
+          TIKTOK_LUAT: ${{ github.workspace }}/law
+          CODE_DIR: ${{ github.workspace }}/code/DỮ LIỆU DÙNG CHUNG CHO HỆ THỐNG/02_MODULE_DUNG_CHUNG
+        run: python tools/build_web.py
+      - name: trang doi so voi ban dang chay?
+        id: so
+        env:
+          EP: ${{ github.event.inputs.ep }}
+        run: |
+          sha=$(cat _work/BUILD_SHA)
+          live=$(curl -s -L -r -800- "https://lambuibg-spec.github.io/so-san-pham/?x=$RANDOM" | grep -o 'build:[0-9a-f]\{16\}' | tail -1 || true)
+          echo "ban moi: build:$sha | ban dang chay: ${live:-khong co}"
+          if [ "$live" = "build:$sha" ] && [ "$EP" != "1" ]; then echo "doi=0" >> "$GITHUB_OUTPUT"; echo "Trang KHONG doi - bo qua dang"; else echo "doi=1" >> "$GITHUB_OUTPUT"; fi
+      - name: luu mau trang moi (co the moi) vao git
+        if: ${{ hashFiles('_work/TEMPLATE_DOI') != '' }}
+        run: |
+          git config user.name "SO SAN PHAM (GitHub)"
+          git config user.email "so-san-pham@users.noreply.github.com"
+          git add template/so_ma_san_pham.html.gz
+          git commit -q -m "mau trang: them the san pham moi (tu dong)"
+          for i in 1 2 3; do git pull -q --rebase origin main && git push -q origin HEAD:main && break || sleep 3; done
+      - name: dong goi trang
+        if: ${{ steps.so.outputs.doi == '1' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    if: ${{ needs.build.outputs.doi == '1' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.dang.outputs.page_url }}
+    steps:
+      - id: dang
+        uses: actions/deploy-pages@v4
