@@ -15,7 +15,8 @@ LAW = os.environ['TIKTOK_LUAT']
 REPO = os.environ.get('REPO', 'lambuibg-spec/so-san-pham')
 WEB = 'https://lambuibg-spec.github.io/so-san-pham/'
 CHO_PHEP_GIT = 20 * 60
-CHO_PHEP_DUNG = 30 * 60
+CHO_PHEP_DUNG = 90 * 60      # lich cua GitHub thuc te 27-38 phut / lan (khong phai 10) ⇒ cho phep 90 phut moi bao; PC kich dung ngay khi git doi nen binh thuong nhanh hon nhieu
+CHO_PHEP_SO_MOI = 45 * 60    # so goc vua doi: cho 45 phut cho GitHub dung kip truoc khi coi web thieu the la loi
 loi, ghi = [], []
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
@@ -69,7 +70,7 @@ try:
         tuoi = now - t
         ghi.append('Lan dung web thanh cong gan nhat: %d phut truoc' % (tuoi // 60))
         if tuoi > CHO_PHEP_DUNG:
-            loi.append('Lan dung web thanh cong gan nhat cach day %d phut (cho phep 30) — GitHub tu dung bi dung?' % (tuoi // 60))
+            loi.append('Lan dung web thanh cong gan nhat cach day %d phut (cho phep 90) — GitHub tu dung bi dung?' % (tuoi // 60))
 except Exception as e:
     loi.append('Khong doc duoc lich su dung web: %s' % str(e)[:120])
 
@@ -86,7 +87,7 @@ try:
         ct = float(subprocess.run(['git', '-C', LAW, 'log', '-1', '--format=%ct', '--', 'so-san-pham/danh_muc.json'], capture_output=True, text=True).stdout.strip() or 0)
     except Exception:
         ct = 0
-    moi_them = now - ct < CHO_PHEP_DUNG      # so goc vua doi < 30 phut: cho GitHub dung kip, chua coi la loi
+    moi_them = now - ct < CHO_PHEP_SO_MOI      # so goc vua doi < 30 phut: cho GitHub dung kip, chua coi la loi
     if the < can and not moi_them:
         loi.append('Web co %d the, so goc co %d ma co anh (thieu %d) va so goc da doi tu hon 30 phut' % (the, can, can - the))
     if 'firebasedatabase.app' not in s:
